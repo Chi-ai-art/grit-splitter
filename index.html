@@ -1,315 +1,235 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3×3dayo｜透過PNG対応・LINEスタンプ向け画像分割</title>
-
+  <title>3×3dayo | LINEスタンプ向け分割ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 24px 16px 40px;
-      text-align: center;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #18263d 0, #050814 60%);
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
-
-    h1 {
-      font-weight: 900;
-      font-size: 2rem;
+    .shell {
+      width: 100%;
+      max-width: 960px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      padding: 24px 24px 28px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .title-block h1 {
+      font-size: 1.6rem;
+      margin: 0;
+    }
+    .title-block p {
+      margin: 4px 0 0;
+      font-size: 0.85rem;
+      color: #cbd5f5;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1.5px solid #ffffff;
+      color: #ffffff;
+      background: rgba(15,23,42,0.6);
+      letter-spacing: 0.04em;
+    }
+    .drop-area {
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 2px dashed rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .drop-area.dragover {
+      border-color: #38bdf8;
+      background: rgba(15, 23, 42, 0.95);
+      transform: translateY(-1px);
+    }
+    .drop-area-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    .drop-area-title {
+      font-size: 0.95rem;
+      font-weight: 500;
       margin-bottom: 4px;
     }
-
-    .sub {
-      font-size: 0.9rem;
-      color: #cbd5f5;
-      margin-bottom: 16px;
+    .drop-area-sub {
+      font-size: 0.78rem;
+      color: #9ca3af;
     }
-
-    .badge {
-      display: inline-block;
-      margin-bottom: 20px;
-      background: transparent;
-      color: #ffffff;
-      font-size: 0.9rem;
-      font-weight: bold;
-      border: 2px solid #fff;
-      border-radius: 12px;
-      padding: 4px 12px;
-      letter-spacing: 1px;
-      white-space: nowrap;
-    }
-
     main {
-      max-width: 420px;
-      margin: 0 auto;
-    }
-
-    #fileInput {
-      display: none;
-    }
-
-    #dropZone {
-      width: 100%;
-      max-width: 360px;
-      height: 260px;
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.9);
-      margin: 0 auto 20px auto;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      transition: all 0.15s ease-out;
-      padding: 8px;
-    }
-
-    #dropZone.hover {
-      box-shadow: 0 0 0 1px #38bdf8, 0 0 0 6px rgba(56, 189, 248, 0.3);
-      border-color: #38bdf8;
-      transform: translateY(-1px);
-    }
-
-    #dropZone span {
-      opacity: .8;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
-
-    #dropZone img {
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 12px;
-      display: block;
-    }
-
-    #tilesWrapper {
-      width: 100%;
-      max-width: 320px;
-      margin: 12px auto 12px;
+      margin-top: 20px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
+      gap: 20px;
     }
-
-    .tile {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      border-radius: 6px;
-      overflow: hidden;
-      background: #020617;
-      display: block;
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+      }
     }
-
-    .tile img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
+    .panel {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 14px;
+      border: 1px solid rgba(55, 65, 81, 0.7);
+      padding: 12px 12px 14px;
     }
-
-    .buttons {
-      margin-top: 12px;
-    }
-
-    button {
-      border: none;
-      padding: 10px 16px;
-      margin: 4px;
-      border-radius: 999px;
+    .panel h2 {
+      margin: 0 0 8px;
       font-size: 0.9rem;
       font-weight: 600;
-      cursor: pointer;
-      color: #fff;
-      background: #3b82f6;
-      min-width: 140px;
+      color: #e5e7eb;
     }
-
-    button.secondary {
-      background: #1e293b;
-    }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    button:hover:not(:disabled) {
-      opacity: 0.9;
-      transform: translateY(-1px);
-    }
-
-    .note {
+    .panel small {
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: #9ca3af;
+    }
+
+    /* ▼▼ 9分割プレビューの点々（スキマ）を消すエリア ▼▼ */
+    #tiles {
       margin-top: 10px;
-      line-height: 1.5;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;                 /* スキマなし */
+      border-radius: 12px;    /* 全体だけ角丸 */
+      overflow: hidden;       /* はみ出しカット */
+      background: transparent;
+    }
+    .tile {
+      background: transparent; /* タイル自体の枠消す */
+      border-radius: 0;
+      border: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      min-height: 0;
+      font-size: 0.7rem;
+    }
+    .tile img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;     /* プレビューで1枚の画像っぽく見えるように */
+      border-radius: 0;
+      margin-bottom: 0;
+    }
+    /* ▲▲ ここまでタイルの見た目調整 ▲▲ */
+
+    .tile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 2px;
+      color: #9ca3af;
+      padding: 4px 6px 0;
+      background: rgba(15,23,42,0.65);
+    }
+    .tile-header label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .tile-header input[type="checkbox"] {
+      accent-color: #38bdf8;
+      width: 12px;
+      height: 12px;
+    }
+    .tile button {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 0;
+      font-size: 0.7rem;
+      cursor: pointer;
+      background: rgba(56, 189, 248, 0.1);
+      color: #e0f2fe;
+      margin: 2px 6px 6px;
+    }
+    .tile button:hover {
+      background: rgba(56, 189, 248, 0.25);
+    }
+    .controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      color: #e0f2fe;
+    }
+    .btn:hover {
+      background: rgba(148, 163, 184, 0.2);
+    }
+    .btn-primary:hover {
+      background: rgba(56, 189, 248, 0.3);
+    }
+    footer {
+      margin-top: 18px;
+      font-size: 0.7rem;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    footer span strong {
+      color: #e5e7eb;
+      font-weight: 500;
     }
   </style>
 </head>
-
 <body>
+  <div class="shell">
+    <header>
+      <div class="title-block">
+        <h1>3×3dayo</h1>
+        <p>1枚の画像をブラウザだけで3×3（9分割）にカット。<br>
+           透過PNG対応なので、背景透明のLINEスタンプ原稿もそのまま分割できます。</p>
+      </div>
+      <div class="badge">ゆる手書き⚪︎白抜きラベル / Browser Only</div>
+    </header>
 
-  <main>
-    <h1>3×3dayo</h1>
-    <p class="sub">1枚の画像を <strong>3×3＝9分割</strong> にカットします（ブラウザ完結）</p>
-    <div class="badge">透過PNG対応・LINEスタンプ用</div>
+    <label class="drop-area" id="dropArea">
+      <input id="fileInput" type="file" accept="image/*" style="display:none" />
+      <div class="drop-area-icon">🧩
 
-    <input type="file" id="fileInput" accept="image/*" />
-
-    <div id="dropZone">
-      <span>ここに画像をドラッグ &amp; ドロップ<br />またはクリックしてファイルを選択</span>
-    </div>
-
-    <div id="tilesWrapper"></div>
-
-    <div class="buttons">
-      <button id="zipBtn" disabled>一括保存（ZIP）</button>
-      <button id="resetBtn" disabled class="secondary">新しく作る</button>
-    </div>
-
-    <p class="note">
-      ※ 元画像の縦横比のまま、3×3 グリッドに分割します<br />
-      ※ PNGの透過情報もそのまま保持されます（LINEスタンプ向け）
-    </p>
-  </main>
-
-  <script>
-    const fileInput = document.getElementById("fileInput");
-    const dropZone = document.getElementById("dropZone");
-    const tilesWrapper = document.getElementById("tilesWrapper");
-    const zipBtn = document.getElementById("zipBtn");
-    const resetBtn = document.getElementById("resetBtn");
-
-    let tiles = [];
-
-    // ドロップゾーン操作
-    dropZone.addEventListener("click", () => fileInput.click());
-
-    ["dragenter", "dragover"].forEach((eventName) => {
-      dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.add("hover");
-      });
-    });
-
-    ["dragleave", "drop"].forEach((eventName) => {
-      dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (eventName === "dragleave") {
-          dropZone.classList.remove("hover");
-        }
-      });
-    });
-
-    dropZone.addEventListener("drop", (e) => {
-      dropZone.classList.remove("hover");
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
-    });
-
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) handleFile(file);
-    });
-
-    function handleFile(file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => splitImage(img);
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function splitImage(img) {
-      // プレビュー差し替え
-      dropZone.innerHTML = "";
-      dropZone.appendChild(img);
-
-      // タイル表示エリア初期化
-      tilesWrapper.innerHTML = "";
-      tiles = [];
-
-      const cols = 3;
-      const rows = 3;
-      const tileWidth = img.width / cols;
-      const tileHeight = img.height / rows;
-
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const canvas = document.createElement("canvas");
-          canvas.width = tileWidth;
-          canvas.height = tileHeight;
-          const ctx = canvas.getContext("2d");
-
-          // ここでPNGの透過もそのまま保持される
-          ctx.drawImage(
-            img,
-            x * tileWidth,
-            y * tileHeight,
-            tileWidth,
-            tileHeight,
-            0,
-            0,
-            tileWidth,
-            tileHeight
-          );
-
-          const dataUrl = canvas.toDataURL("image/png");
-
-          // 画面用DOM
-          const tileDiv = document.createElement("div");
-          tileDiv.className = "tile";
-          const tileImg = document.createElement("img");
-          tileImg.src = dataUrl;
-          tileDiv.appendChild(tileImg);
-          tilesWrapper.appendChild(tileDiv);
-
-          tiles.push({
-            name: `tile_${y + 1}_${x + 1}.png`,
-            data: dataUrl,
-          });
-        }
-      }
-
-      zipBtn.disabled = false;
-      resetBtn.disabled = false;
-    }
-
-    // ZIP一括ダウンロード
-    zipBtn.addEventListener("click", () => {
-      if (!tiles.length) return;
-
-      import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js").then((JSZipModule) => {
-        const JSZip = JSZipModule.default;
-        const zip = new JSZip();
-
-        tiles.forEach((tile) => {
-          zip.file(tile.name, tile.data.split(",")[1], { base64: true });
-        });
-
-        zip.generateAsync({ type: "blob" }).then((content) => {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(content);
-          link.download = "3x3_tiles.zip";
-          link.click();
-        });
-      });
-    });
-
-    // 新しく作る（リセット）
-    resetBtn.addEventListener("click", () => {
-      tiles = [];
-      tilesWrapper.innerHTML =
