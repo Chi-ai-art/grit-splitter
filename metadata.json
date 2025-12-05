@@ -1,0 +1,5 @@
+{
+  "name": "GridSplitter AI",
+  "description": "画像を3x3のグリッドに自動分割し、個別にダウンロードできるツール。Gemini APIを使用して各断片の内容を解析することも可能です。",
+  "requestFramePermissions": []
+}
