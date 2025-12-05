@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>3×3dayo | LINEスタンプ向け分割ツール</title>
+  <title>GridSplitter AI (3×3)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: radial-gradient(circle at top, #18263d 0, #050814 60%);
       color: #f9fafb;
       min-height: 100vh;
@@ -35,7 +35,7 @@
       flex-wrap: wrap;
     }
     .title-block h1 {
-      font-size: 1.6rem;
+      font-size: 1.25rem;
       margin: 0;
     }
     .title-block p {
@@ -43,29 +43,35 @@
       font-size: 0.85rem;
       color: #cbd5f5;
     }
+    /* ゆる手書きっぽい白抜きラベル */
     .badge {
-      font-size: 0.7rem;
-      padding: 6px 10px;
+      font-size: 0.8rem;
+      padding: 4px 14px;
       border-radius: 999px;
-      border: 1.5px solid #ffffff;
+      border: 2px solid #ffffff;
+      background: transparent;
       color: #ffffff;
-      background: rgba(15,23,42,0.6);
+      font-weight: 600;
       letter-spacing: 0.04em;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      box-shadow: 0 0 0 2px rgba(15,23,42,0.9);
     }
+
+    /* ドラッグ＆ドロップの「枠」を消すバージョン */
     .drop-area {
       margin-top: 8px;
       border-radius: 16px;
-      border: 2px dashed rgba(148, 163, 184, 0.6);
+      border: none; /* 枠なし */
       background: rgba(15, 23, 42, 0.8);
       padding: 32px 16px;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
     }
     .drop-area.dragover {
-      border-color: #38bdf8;
       background: rgba(15, 23, 42, 0.95);
       transform: translateY(-1px);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
     }
     .drop-area-icon {
       font-size: 32px;
@@ -108,39 +114,24 @@
       font-size: 0.75rem;
       color: #9ca3af;
     }
-
-    /* ▼▼ 9分割プレビューの点々（スキマ）を消すエリア ▼▼ */
     #tiles {
       margin-top: 10px;
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0;                 /* スキマなし */
-      border-radius: 12px;    /* 全体だけ角丸 */
-      overflow: hidden;       /* はみ出しカット */
-      background: transparent;
+      gap: 4px;
     }
     .tile {
-      background: transparent; /* タイル自体の枠消す */
-      border-radius: 0;
-      border: none;
-      padding: 0;
+      background: #020617;
+      border-radius: 8px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 4px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      justify-content: flex-start;
+      justify-content: space-between;
       min-height: 0;
       font-size: 0.7rem;
     }
-    .tile img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;     /* プレビューで1枚の画像っぽく見えるように */
-      border-radius: 0;
-      margin-bottom: 0;
-    }
-    /* ▲▲ ここまでタイルの見た目調整 ▲▲ */
-
     .tile-header {
       display: flex;
       align-items: center;
@@ -148,8 +139,6 @@
       gap: 4px;
       margin-bottom: 2px;
       color: #9ca3af;
-      padding: 4px 6px 0;
-      background: rgba(15,23,42,0.65);
     }
     .tile-header label {
       display: flex;
@@ -162,6 +151,13 @@
       width: 12px;
       height: 12px;
     }
+    .tile img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
     .tile button {
       border: none;
       border-radius: 999px;
@@ -170,7 +166,6 @@
       cursor: pointer;
       background: rgba(56, 189, 248, 0.1);
       color: #e0f2fe;
-      margin: 2px 6px 6px;
     }
     .tile button:hover {
       background: rgba(56, 189, 248, 0.25);
@@ -222,14 +217,259 @@
   <div class="shell">
     <header>
       <div class="title-block">
-        <h1>3×3dayo</h1>
-        <p>1枚の画像をブラウザだけで3×3（9分割）にカット。<br>
-           透過PNG対応なので、背景透明のLINEスタンプ原稿もそのまま分割できます。</p>
+        <h1>GridSplitter AI (3×3)</h1>
+        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします。サーバー送信なし・APIなしで安心して使えます。</p>
       </div>
-      <div class="badge">ゆる手書き⚪︎白抜きラベル / Browser Only</div>
+      <!-- 「3×3dayo」ラベル -->
+      <div class="badge">3×3dayo</div>
     </header>
 
     <label class="drop-area" id="dropArea">
       <input id="fileInput" type="file" accept="image/*" style="display:none" />
-      <div class="drop-area-icon">🧩
+      <div class="drop-area-icon">🖼️</div>
+      <div class="drop-area-title">画像をここにドラッグ＆ドロップ</div>
+      <div class="drop-area-sub">またはクリックして1枚の画像を選択（正方形でなくてもOK / 3×3に分割）</div>
+    </label>
 
+    <main>
+      <section class="panel">
+        <h2>元画像プレビュー</h2>
+        <small>アップロードした画像が表示されます。</small>
+        <div id="originalPreview" style="margin-top:10px; text-align:center; min-height:120px;">
+          <span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>3×3 の分割結果</h2>
+        <small>チェックを外したタイルは一括保存から除外されます。</small>
+        <div id="tiles"></div>
+        <div class="controls">
+          <button class="btn" id="clearBtn">クリア</button>
+          <!-- ★ 追加：戻る（新しく作る）ボタン -->
+          <button class="btn" id="newBtn">新しく作る</button>
+          <button class="btn" id="downloadSelectedBtn">選択タイルをZIP保存</button>
+          <button class="btn btn-primary" id="downloadAllBtn">9枚まとめてZIP保存</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span><strong>使い方：</strong>画像を1枚アップ → 自動で3×3に分割 → 個別 or ZIPで保存できます。</span>
+      <span>© GridSplitter – Browser edition / Built with HTML + JavaScript only.</span>
+    </footer>
+  </div>
+
+  <!-- ZIP生成用ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+  <script>
+    const fileInput           = document.getElementById('fileInput');
+    const dropArea            = document.getElementById('dropArea');
+    const tilesEl             = document.getElementById('tiles');
+    const originalPreview     = document.getElementById('originalPreview');
+    const clearBtn            = document.getElementById('clearBtn');
+    const newBtn              = document.getElementById('newBtn');      // ← 追加
+    const downloadAllBtn      = document.getElementById('downloadAllBtn');
+    const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+
+    // タイル情報を保持する配列
+    let tilesData = [];
+
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.remove('dragover');
+      });
+    });
+    dropArea.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    // 共通リセット処理
+    function resetAll() {
+      tilesEl.innerHTML = '';
+      tilesData = [];
+      originalPreview.innerHTML =
+        '<span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>';
+      fileInput.value = '';
+    }
+
+    clearBtn.addEventListener('click', resetAll);
+
+    // 新しく作る（戻る）ボタン
+    newBtn.addEventListener('click', () => {
+      resetAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          showOriginal(img);
+          splitImage(img);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showOriginal(img) {
+      originalPreview.innerHTML = '';
+      const previewImg = document.createElement('img');
+      previewImg.src = img.src;
+      previewImg.style.maxWidth = '100%';
+      previewImg.style.borderRadius = '10px';
+      previewImg.style.boxShadow = '0 10px 30px rgba(0,0,0,0.4)';
+      originalPreview.appendChild(previewImg);
+    }
+
+    function splitImage(img) {
+      tilesEl.innerHTML = '';
+      tilesData = [];
+
+      const cols = 3;
+      const rows = 3;
+      const tileWidth  = img.width / cols;
+      const tileHeight = img.height / rows;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const canvas = document.createElement('canvas');
+          canvas.width  = tileWidth;
+          canvas.height = tileHeight;
+          const ctx = canvas.getContext('2d');
+
+          ctx.drawImage(
+            img,
+            x * tileWidth, y * tileHeight,
+            tileWidth, tileHeight,
+            0, 0,
+            tileWidth, tileHeight
+          );
+
+          const dataUrl = canvas.toDataURL('image/png');
+          const row = y + 1;
+          const col = x + 1;
+
+          // 配列に保存（ZIP用）
+          tilesData.push({ row, col, dataUrl });
+          const index = tilesData.length - 1;
+
+          const tileDiv = document.createElement('div');
+          tileDiv.className = 'tile';
+
+          const header = document.createElement('div');
+          header.className = 'tile-header';
+
+          const label = document.createElement('label');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'tile-check';
+          checkbox.checked = true;
+          checkbox.dataset.index = index;
+
+          const txt = document.createElement('span');
+          txt.textContent = `(${row}, ${col})`;
+
+          label.appendChild(checkbox);
+          label.appendChild(txt);
+
+          const mini = document.createElement('span');
+          mini.textContent = '保存対象';
+          mini.style.fontSize = '0.65rem';
+
+          header.appendChild(label);
+          header.appendChild(mini);
+
+          const tileImg = document.createElement('img');
+          tileImg.src = dataUrl;
+
+          const btn = document.createElement('button');
+          btn.textContent = 'このタイルだけ保存';
+          btn.addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `grid_${row}_${col}.png`;
+            a.click();
+          });
+
+          tileDiv.appendChild(header);
+          tileDiv.appendChild(tileImg);
+          tileDiv.appendChild(btn);
+          tilesEl.appendChild(tileDiv);
+        }
+      }
+    }
+
+    // 全タイルZIP保存
+    downloadAllBtn.addEventListener('click', () => {
+      if (!tilesData.length) {
+        alert('まず画像をアップロードしてください。');
+        return;
+      }
+      const indices = tilesData.map((_, i) => i);
+      downloadZip(indices, 'grid_all.zip');
+    });
+
+    // チェック済みタイルのみZIP保存
+    downloadSelectedBtn.addEventListener('click', () => {
+      if (!tilesData.length) {
+        alert('まず画像をアップロードしてください。');
+        return;
+      }
+      const checks = document.querySelectorAll('.tile-check');
+      const indices = [];
+      checks.forEach(ch => {
+        if (ch.checked) {
+          indices.push(Number(ch.dataset.index));
+        }
+      });
+      if (!indices.length) {
+        alert('ZIPに含めるタイルにチェックを入れてください。');
+        return;
+      }
+      downloadZip(indices, 'grid_selected.zip');
+    });
+
+    async function downloadZip(indices, filename) {
+      if (!window.JSZip) {
+        alert('ZIPライブラリの読み込みに失敗しました。ネットワーク接続を確認してください。');
+        return;
+      }
+      const zip = new JSZip();
+      indices.forEach(i => {
+        const t = tilesData[i];
+        const base64 = t.dataUrl.split(',')[1]; // dataURLからBase64部分だけ抜き出し
+        zip.file(`grid_${t.row}_${t.col}.png`, base64, { base64: true });
+      });
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+  </script>
+</body>
+</html>
