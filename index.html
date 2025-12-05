@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -43,7 +43,7 @@
       font-size: 0.85rem;
       color: #cbd5f5;
     }
-    /* ゆる手書きっぽい白抜きラベル */
+    /* ← ゆる手書きっぽい白抜きラベル */
     .badge {
       font-size: 0.8rem;
       padding: 4px 14px;
@@ -61,7 +61,7 @@
     .drop-area {
       margin-top: 8px;
       border-radius: 16px;
-      border: none; /* 枠なし */
+      border: none; /* ← 枠なし！ */
       background: rgba(15, 23, 42, 0.8);
       padding: 32px 16px;
       text-align: center;
@@ -218,9 +218,9 @@
     <header>
       <div class="title-block">
         <h1>GridSplitter AI (3×3)</h1>
-        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします。サーバー送信なし・APIなしで安心して使えます。</p>
+        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします。</p>
       </div>
-      <!-- 「3×3dayo」ラベル -->
+      <!-- ★ ここが「3×3dayo」ラベル -->
       <div class="badge">3×3dayo</div>
     </header>
 
@@ -246,8 +246,6 @@
         <div id="tiles"></div>
         <div class="controls">
           <button class="btn" id="clearBtn">クリア</button>
-          <!-- ★ 追加：戻る（新しく作る）ボタン -->
-          <button class="btn" id="newBtn">新しく作る</button>
           <button class="btn" id="downloadSelectedBtn">選択タイルをZIP保存</button>
           <button class="btn btn-primary" id="downloadAllBtn">9枚まとめてZIP保存</button>
         </div>
@@ -264,13 +262,12 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
   <script>
-    const fileInput           = document.getElementById('fileInput');
-    const dropArea            = document.getElementById('dropArea');
-    const tilesEl             = document.getElementById('tiles');
-    const originalPreview     = document.getElementById('originalPreview');
-    const clearBtn            = document.getElementById('clearBtn');
-    const newBtn              = document.getElementById('newBtn');      // ← 追加
-    const downloadAllBtn      = document.getElementById('downloadAllBtn');
+    const fileInput = document.getElementById('fileInput');
+    const dropArea = document.getElementById('dropArea');
+    const tilesEl  = document.getElementById('tiles');
+    const originalPreview = document.getElementById('originalPreview');
+    const clearBtn = document.getElementById('clearBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
     const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
 
     // タイル情報を保持する配列
@@ -284,14 +281,14 @@
       }
     });
 
-    ['dragenter', 'dragover'].forEach(eventName => {
+    ;['dragenter', 'dragover'].forEach(eventName => {
       dropArea.addEventListener(eventName, (e) => {
         e.preventDefault();
         e.stopPropagation();
         dropArea.classList.add('dragover');
       });
     });
-    ['dragleave', 'drop'].forEach(eventName => {
+    ;['dragleave', 'drop'].forEach(eventName => {
       dropArea.addEventListener(eventName, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -303,21 +300,12 @@
       if (file) handleFile(file);
     });
 
-    // 共通リセット処理
-    function resetAll() {
+    clearBtn.addEventListener('click', () => {
       tilesEl.innerHTML = '';
       tilesData = [];
       originalPreview.innerHTML =
         '<span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>';
       fileInput.value = '';
-    }
-
-    clearBtn.addEventListener('click', resetAll);
-
-    // 新しく作る（戻る）ボタン
-    newBtn.addEventListener('click', () => {
-      resetAll();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     function handleFile(file) {
@@ -405,7 +393,7 @@
           tileImg.src = dataUrl;
 
           const btn = document.createElement('button');
-          btn.textContent = 'このタイルだけ保存';
+          btn.textContent = `このタイルだけ保存`;
           btn.addEventListener('click', () => {
             const a = document.createElement('a');
             a.href = dataUrl;
