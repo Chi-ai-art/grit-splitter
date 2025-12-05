@@ -1,31 +1,335 @@
 <!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GridSplitter AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #0f172a; /* Slate 900 */
-        color: #e2e8f0; /* Slate 200 */
+<head>
+  <meta charset="UTF-8" />
+  <title>GridSplitter AI (3×3)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #18263d 0, #050814 60%);
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 960px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      padding: 24px 24px 28px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .title-block h1 {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+    .title-block p {
+      margin: 4px 0 0;
+      font-size: 0.85rem;
+      color: #cbd5f5;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+    }
+    .drop-area {
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 2px dashed rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.8);
+      padding: 32px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .drop-area.dragover {
+      border-color: #38bdf8;
+      background: rgba(15, 23, 42, 0.95);
+      transform: translateY(-1px);
+    }
+    .drop-area-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    .drop-area-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .drop-area-sub {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    main {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
       }
-    </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
-    "jszip": "https://esm.run/jszip"
-  }
-}
-</script>
+    }
+    .panel {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 14px;
+      border: 1px solid rgba(55, 65, 81, 0.7);
+      padding: 12px 12px 14px;
+    }
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .panel small {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    #tiles {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4px;
+    }
+    .tile {
+      background: #020617;
+      border-radius: 8px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: space-between;
+      min-height: 0;
+    }
+    .tile img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+    .tile button {
+      border: none;
+      border-radius: 999px;
+      padding: 4px 0;
+      font-size: 0.7rem;
+      cursor: pointer;
+      background: rgba(56, 189, 248, 0.1);
+      color: #e0f2fe;
+    }
+    .tile button:hover {
+      background: rgba(56, 189, 248, 0.25);
+    }
+    .controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      background: transparent;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+    .btn-primary {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      color: #e0f2fe;
+    }
+    footer {
+      margin-top: 18px;
+      font-size: 0.7rem;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    footer span strong {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+  </style>
 </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<body>
+  <div class="shell">
+    <header>
+      <div class="title-block">
+        <h1>GridSplitter AI (3×3)</h1>
+        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします。サーバー送信なし・APIなしで安心して使えます。</p>
+      </div>
+      <div class="badge">Browser-only · No API / Free</div>
+    </header>
+
+    <label class="drop-area" id="dropArea">
+      <input id="fileInput" type="file" accept="image/*" style="display:none" />
+      <div class="drop-area-icon">🖼️</div>
+      <div class="drop-area-title">画像をここにドラッグ＆ドロップ</div>
+      <div class="drop-area-sub">またはクリックして1枚の画像を選択（正方形でなくてもOK / 3×3に分割）</div>
+    </label>
+
+    <main>
+      <section class="panel">
+        <h2>元画像プレビュー</h2>
+        <small>アップロードした画像が表示されます。</small>
+        <div id="originalPreview" style="margin-top:10px; text-align:center; min-height:120px;">
+          <span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>3×3 の分割結果</h2>
+        <small>各ピースを個別にダウンロードできます。</small>
+        <div id="tiles"></div>
+        <div class="controls">
+          <button class="btn" id="clearBtn">クリア</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span><strong>使い方：</strong>画像を1枚アップ → 自動で3×3に分割 → 各ピースをPNGで保存できます。</span>
+      <span>© GridSplitter – Browser edition / Built with HTML + JavaScript only.</span>
+    </footer>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropArea = document.getElementById('dropArea');
+    const tilesEl  = document.getElementById('tiles');
+    const originalPreview = document.getElementById('originalPreview');
+    const clearBtn = document.getElementById('clearBtn');
+
+    dropArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    ;['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.add('dragover');
+      });
+    });
+    ;['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropArea.classList.remove('dragover');
+      });
+    });
+    dropArea.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      tilesEl.innerHTML = '';
+      originalPreview.innerHTML =
+        '<span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>';
+      fileInput.value = '';
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          showOriginal(img);
+          splitImage(img);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function showOriginal(img) {
+      originalPreview.innerHTML = '';
+      const previewImg = document.createElement('img');
+      previewImg.src = img.src;
+      previewImg.style.maxWidth = '100%';
+      previewImg.style.borderRadius = '10px';
+      previewImg.style.boxShadow = '0 10px 30px rgba(0,0,0,0.4)';
+      originalPreview.appendChild(previewImg);
+    }
+
+    function splitImage(img) {
+      tilesEl.innerHTML = '';
+
+      const cols = 3;
+      const rows = 3;
+      const tileWidth  = img.width / cols;
+      const tileHeight = img.height / rows;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const canvas = document.createElement('canvas');
+          canvas.width  = tileWidth;
+          canvas.height = tileHeight;
+          const ctx = canvas.getContext('2d');
+
+          ctx.drawImage(
+            img,
+            x * tileWidth, y * tileHeight,
+            tileWidth, tileHeight,
+            0, 0,
+            tileWidth, tileHeight
+          );
+
+          const dataUrl = canvas.toDataURL('image/png');
+
+          const tileDiv = document.createElement('div');
+          tileDiv.className = 'tile';
+
+          const tileImg = document.createElement('img');
+          tileImg.src = dataUrl;
+
+          const btn = document.createElement('button');
+          const label = `タイル (${y+1}, ${x+1}) を保存`;
+          btn.textContent = label;
+          btn.addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `grid_${y+1}_${x+1}.png`;
+            a.click();
+          });
+
+          tileDiv.appendChild(tileImg);
+          tileDiv.appendChild(btn);
+          tilesEl.appendChild(tileDiv);
+        }
+      }
+    }
+  </script>
+</body>
 </html>
