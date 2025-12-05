@@ -4,27 +4,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3×3dayo｜画像分割ツール</title>
+  <title>3×3dayo｜透過PNG対応・LINEスタンプ向け画像分割</title>
 
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: "Inter", sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
       background: #0f172a;
       color: #e2e8f0;
-      padding: 24px;
+      padding: 24px 16px 40px;
       text-align: center;
     }
 
     h1 {
       font-weight: 900;
       font-size: 2rem;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
+    }
+
+    .sub {
+      font-size: 0.9rem;
+      color: #cbd5f5;
+      margin-bottom: 16px;
     }
 
     .badge {
@@ -32,87 +38,149 @@
       margin-bottom: 20px;
       background: transparent;
       color: #ffffff;
-      font-size: 1.2rem;
+      font-size: 0.9rem;
       font-weight: bold;
       border: 2px solid #fff;
       border-radius: 12px;
-      padding: 6px 14px;
+      padding: 4px 12px;
       letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    main {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    #fileInput {
+      display: none;
     }
 
     #dropZone {
       width: 100%;
-      max-width: 350px;
-      height: 350px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
+      max-width: 360px;
+      height: 260px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.9);
       margin: 0 auto 20px auto;
+      border: 1px solid rgba(148, 163, 184, 0.4);
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
+      transition: all 0.15s ease-out;
+      padding: 8px;
+    }
+
+    #dropZone.hover {
+      box-shadow: 0 0 0 1px #38bdf8, 0 0 0 6px rgba(56, 189, 248, 0.3);
+      border-color: #38bdf8;
+      transform: translateY(-1px);
     }
 
     #dropZone span {
-      opacity: .7;
+      opacity: .8;
+      font-size: 0.9rem;
+      line-height: 1.4;
     }
 
-    img {
+    #dropZone img {
       max-width: 100%;
       max-height: 100%;
-      border-radius: 8px;
+      border-radius: 12px;
+      display: block;
     }
 
     #tilesWrapper {
       width: 100%;
-      max-width: 350px;
-      margin: 18px auto 12px;
+      max-width: 320px;
+      margin: 12px auto 12px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 4px;
     }
 
     .tile {
       width: 100%;
-      aspect-ratio: 1;
-      background: #222;
+      aspect-ratio: 1 / 1;
       border-radius: 6px;
       overflow: hidden;
+      background: #020617;
+      display: block;
+    }
+
+    .tile img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .buttons {
+      margin-top: 12px;
     }
 
     button {
       border: none;
-      padding: 12px 16px;
-      margin: 6px;
-      border-radius: 8px;
+      padding: 10px 16px;
+      margin: 4px;
+      border-radius: 999px;
       font-size: 0.9rem;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
       color: #fff;
       background: #3b82f6;
+      min-width: 140px;
     }
 
-    button:hover {
-      opacity: 0.85;
+    button.secondary {
+      background: #1e293b;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    button:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .note {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 10px;
+      line-height: 1.5;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>3×3dayo</h1>
-  <div class="badge">画像をサクッと分割✊✨</div>
+  <main>
+    <h1>3×3dayo</h1>
+    <p class="sub">1枚の画像を 3×3（9分割）にカットします</p>
+    <div class="badge">透過PNG対応・LINEスタンプ用</div>
 
-  <input type="file" id="fileInput" accept="image/*" hidden />
+    <input type="file" id="fileInput" accept="image/png,image/webp,image/jpeg" />
 
-  <div id="dropZone">
-    <span>ここに画像をドラッグ or クリックして選択</span>
-  </div>
+    <div id="dropZone">
+      <span>ここに画像をドラッグ &amp; ドロップ<br />またはクリックしてファイルを選択</span>
+    </div>
 
-  <div id="tilesWrapper"></div>
+    <div id="tilesWrapper"></div>
 
-  <button id="zipBtn" style="display:none;">一括保存（ZIP）</button>
-  <button id="resetBtn" style="display:none;">新しく作る</button>
+    <div class="buttons">
+      <button id="zipBtn" disabled>一括保存（ZIP）</button>
+      <button id="resetBtn" disabled class="secondary">新しく作る</button>
+    </div>
+
+    <p class="note">
+      ※ PNGの透過情報はそのまま保持されます<br />
+      ※ 分割後の画像は 9枚のPNGとしてダウンロードされます
+    </p>
+  </main>
 
   <script>
     const fileInput = document.getElementById("fileInput");
@@ -121,24 +189,28 @@
     const zipBtn = document.getElementById("zipBtn");
     const resetBtn = document.getElementById("resetBtn");
 
+    let tiles = [];
+
+    // ドロップゾーン操作
     dropZone.addEventListener("click", () => fileInput.click());
-    dropZone.addEventListener("dragover", e => {
+
+    dropZone.addEventListener("dragover", (e) => {
       e.preventDefault();
-      dropZone.style.opacity = 0.6;
+      dropZone.classList.add("hover");
     });
 
     dropZone.addEventListener("dragleave", () => {
-      dropZone.style.opacity = 1;
+      dropZone.classList.remove("hover");
     });
 
-    dropZone.addEventListener("drop", e => {
+    dropZone.addEventListener("drop", (e) => {
       e.preventDefault();
-      dropZone.style.opacity = 1;
+      dropZone.classList.remove("hover");
       const file = e.dataTransfer.files[0];
       if (file) handleFile(file);
     });
 
-    fileInput.addEventListener("change", e => {
+    fileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) handleFile(file);
     });
@@ -146,16 +218,17 @@
     function handleFile(file) {
       const img = new Image();
       img.src = URL.createObjectURL(file);
-
       img.onload = () => {
+        // プレビューを置き換え
         dropZone.innerHTML = "";
         dropZone.appendChild(img);
 
+        // タイルをリセット
         tilesWrapper.innerHTML = "";
-        const cropSize = Math.min(img.width, img.height);
+        tiles = [];
 
+        const cropSize = Math.min(img.width, img.height);
         const tileSize = cropSize / 3;
-        let tiles = [];
 
         for (let y = 0; y < 3; y++) {
           for (let x = 0; x < 3; x++) {
@@ -163,6 +236,8 @@
             canvas.width = tileSize;
             canvas.height = tileSize;
             const ctx = canvas.getContext("2d");
+
+            // ここで PNG のアルファ（透過）もそのまま保持される
             ctx.drawImage(
               img,
               x * tileSize,
@@ -175,51 +250,60 @@
               tileSize
             );
 
-            const tileImg = new Image();
-            tileImg.className = "tile";
-            tileImg.src = canvas.toDataURL("image/png");
-            tilesWrapper.appendChild(tileImg);
+            const dataUrl = canvas.toDataURL("image/png");
+
+            // 画面表示用
+            const tileDiv = document.createElement("div");
+            tileDiv.className = "tile";
+            const tileImg = document.createElement("img");
+            tileImg.src = dataUrl;
+            tileDiv.appendChild(tileImg);
+            tilesWrapper.appendChild(tileDiv);
 
             tiles.push({
-              name: `tile_${y}_${x}.png`,
-              data: canvas.toDataURL("image/png")
+              name: `tile_${y + 1}_${x + 1}.png`,
+              data: dataUrl
             });
           }
         }
 
-        zipBtn.style.display = "inline-block";
-        resetBtn.style.display = "inline-block";
-
-        zipBtn.onclick = () => downloadZip(tiles);
+        zipBtn.disabled = false;
+        resetBtn.disabled = false;
       };
     }
 
-    function downloadZip(tiles) {
-      import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js').then(JSZipModule => {
+    // ZIP一括ダウンロード
+    zipBtn.addEventListener("click", () => {
+      if (!tiles.length) return;
+
+      import("https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js").then((JSZipModule) => {
         const JSZip = JSZipModule.default;
         const zip = new JSZip();
 
-        tiles.forEach(tile => {
+        tiles.forEach((tile) => {
           zip.file(tile.name, tile.data.split(",")[1], { base64: true });
         });
 
-        zip.generateAsync({ type: "blob" }).then(content => {
+        zip.generateAsync({ type: "blob" }).then((content) => {
           const link = document.createElement("a");
           link.href = URL.createObjectURL(content);
           link.download = "3x3_tiles.zip";
           link.click();
         });
       });
-    }
+    });
 
+    // 新しく作る（リセット）
     resetBtn.addEventListener("click", () => {
+      tiles = [];
       tilesWrapper.innerHTML = "";
-      dropZone.innerHTML = `<span>ここに画像をドラッグ or クリックして選択</span>`;
+      dropZone.innerHTML =
+        '<span>ここに画像をドラッグ &amp; ドロップ<br />またはクリックしてファイルを選択</span>';
       fileInput.value = "";
-      zipBtn.style.display = "none";
-      resetBtn.style.display = "none";
+      zipBtn.disabled = true;
+      resetBtn.disabled = true;
     });
   </script>
-
 </body>
+
 </html>
