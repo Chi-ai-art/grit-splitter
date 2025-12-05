@@ -160,10 +160,10 @@
 
   <main>
     <h1>3×3dayo</h1>
-    <p class="sub">1枚の画像を 3×3（9分割）にカットします</p>
+    <p class="sub">1枚の画像を <strong>3×3＝9分割</strong> にカットします（ブラウザ完結）</p>
     <div class="badge">透過PNG対応・LINEスタンプ用</div>
 
-    <input type="file" id="fileInput" accept="image/png,image/webp,image/jpeg" />
+    <input type="file" id="fileInput" accept="image/*" />
 
     <div id="dropZone">
       <span>ここに画像をドラッグ &amp; ドロップ<br />またはクリックしてファイルを選択</span>
@@ -177,8 +177,8 @@
     </div>
 
     <p class="note">
-      ※ PNGの透過情報はそのまま保持されます<br />
-      ※ 分割後の画像は 9枚のPNGとしてダウンロードされます
+      ※ 元画像の縦横比のまま、3×3 グリッドに分割します<br />
+      ※ PNGの透過情報もそのまま保持されます（LINEスタンプ向け）
     </p>
   </main>
 
@@ -194,17 +194,25 @@
     // ドロップゾーン操作
     dropZone.addEventListener("click", () => fileInput.click());
 
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.classList.add("hover");
+    ["dragenter", "dragover"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add("hover");
+      });
     });
 
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("hover");
+    ["dragleave", "drop"].forEach((eventName) => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (eventName === "dragleave") {
+          dropZone.classList.remove("hover");
+        }
+      });
     });
 
     dropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
       dropZone.classList.remove("hover");
       const file = e.dataTransfer.files[0];
       if (file) handleFile(file);
@@ -216,60 +224,68 @@
     });
 
     function handleFile(file) {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      img.onload = () => {
-        // プレビューを置き換え
-        dropZone.innerHTML = "";
-        dropZone.appendChild(img);
-
-        // タイルをリセット
-        tilesWrapper.innerHTML = "";
-        tiles = [];
-
-        const cropSize = Math.min(img.width, img.height);
-        const tileSize = cropSize / 3;
-
-        for (let y = 0; y < 3; y++) {
-          for (let x = 0; x < 3; x++) {
-            const canvas = document.createElement("canvas");
-            canvas.width = tileSize;
-            canvas.height = tileSize;
-            const ctx = canvas.getContext("2d");
-
-            // ここで PNG のアルファ（透過）もそのまま保持される
-            ctx.drawImage(
-              img,
-              x * tileSize,
-              y * tileSize,
-              tileSize,
-              tileSize,
-              0,
-              0,
-              tileSize,
-              tileSize
-            );
-
-            const dataUrl = canvas.toDataURL("image/png");
-
-            // 画面表示用
-            const tileDiv = document.createElement("div");
-            tileDiv.className = "tile";
-            const tileImg = document.createElement("img");
-            tileImg.src = dataUrl;
-            tileDiv.appendChild(tileImg);
-            tilesWrapper.appendChild(tileDiv);
-
-            tiles.push({
-              name: `tile_${y + 1}_${x + 1}.png`,
-              data: dataUrl
-            });
-          }
-        }
-
-        zipBtn.disabled = false;
-        resetBtn.disabled = false;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => splitImage(img);
+        img.src = e.target.result;
       };
+      reader.readAsDataURL(file);
+    }
+
+    function splitImage(img) {
+      // プレビュー差し替え
+      dropZone.innerHTML = "";
+      dropZone.appendChild(img);
+
+      // タイル表示エリア初期化
+      tilesWrapper.innerHTML = "";
+      tiles = [];
+
+      const cols = 3;
+      const rows = 3;
+      const tileWidth = img.width / cols;
+      const tileHeight = img.height / rows;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const canvas = document.createElement("canvas");
+          canvas.width = tileWidth;
+          canvas.height = tileHeight;
+          const ctx = canvas.getContext("2d");
+
+          // ここでPNGの透過もそのまま保持される
+          ctx.drawImage(
+            img,
+            x * tileWidth,
+            y * tileHeight,
+            tileWidth,
+            tileHeight,
+            0,
+            0,
+            tileWidth,
+            tileHeight
+          );
+
+          const dataUrl = canvas.toDataURL("image/png");
+
+          // 画面用DOM
+          const tileDiv = document.createElement("div");
+          tileDiv.className = "tile";
+          const tileImg = document.createElement("img");
+          tileImg.src = dataUrl;
+          tileDiv.appendChild(tileImg);
+          tilesWrapper.appendChild(tileDiv);
+
+          tiles.push({
+            name: `tile_${y + 1}_${x + 1}.png`,
+            data: dataUrl,
+          });
+        }
+      }
+
+      zipBtn.disabled = false;
+      resetBtn.disabled = false;
     }
 
     // ZIP一括ダウンロード
@@ -296,14 +312,4 @@
     // 新しく作る（リセット）
     resetBtn.addEventListener("click", () => {
       tiles = [];
-      tilesWrapper.innerHTML = "";
-      dropZone.innerHTML =
-        '<span>ここに画像をドラッグ &amp; ドロップ<br />またはクリックしてファイルを選択</span>';
-      fileInput.value = "";
-      zipBtn.disabled = true;
-      resetBtn.disabled = true;
-    });
-  </script>
-</body>
-
-</html>
+      tilesWrapper.innerHTML =
