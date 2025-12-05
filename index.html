@@ -122,6 +122,26 @@
       align-items: stretch;
       justify-content: space-between;
       min-height: 0;
+      font-size: 0.7rem;
+    }
+    .tile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 2px;
+      color: #9ca3af;
+    }
+    .tile-header label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .tile-header input[type="checkbox"] {
+      accent-color: #38bdf8;
+      width: 12px;
+      height: 12px;
     }
     .tile img {
       display: block;
@@ -147,6 +167,7 @@
       justify-content: flex-end;
       gap: 8px;
       margin-top: 10px;
+      flex-wrap: wrap;
     }
     .btn {
       border-radius: 999px;
@@ -156,11 +177,18 @@
       background: transparent;
       color: #e5e7eb;
       cursor: pointer;
+      white-space: nowrap;
     }
     .btn-primary {
       border-color: #38bdf8;
       background: rgba(56, 189, 248, 0.15);
       color: #e0f2fe;
+    }
+    .btn:hover {
+      background: rgba(148, 163, 184, 0.2);
+    }
+    .btn-primary:hover {
+      background: rgba(56, 189, 248, 0.3);
     }
     footer {
       margin-top: 18px;
@@ -182,7 +210,7 @@
     <header>
       <div class="title-block">
         <h1>GridSplitter AI (3×3)</h1>
-        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします。サーバー送信なし・APIなしで安心して使えます。</p>
+        <p>1枚の画像をブラウザだけで3×3（9分割）にカットします!</p>
       </div>
       <div class="badge">Browser-only · No API / Free</div>
     </header>
@@ -205,19 +233,24 @@
 
       <section class="panel">
         <h2>3×3 の分割結果</h2>
-        <small>各ピースを個別にダウンロードできます。</small>
+        <small>チェックを外したタイルは一括保存から除外されます。</small>
         <div id="tiles"></div>
         <div class="controls">
           <button class="btn" id="clearBtn">クリア</button>
+          <button class="btn" id="downloadSelectedBtn">選択タイルをZIP保存</button>
+          <button class="btn btn-primary" id="downloadAllBtn">9枚まとめてZIP保存</button>
         </div>
       </section>
     </main>
 
     <footer>
-      <span><strong>使い方：</strong>画像を1枚アップ → 自動で3×3に分割 → 各ピースをPNGで保存できます。</span>
+      <span><strong>使い方：</strong>画像を1枚アップ → 自動で3×3に分割 → 個別 or ZIPで保存できます。</span>
       <span>© GridSplitter – Browser edition / Built with HTML + JavaScript only.</span>
     </footer>
   </div>
+
+  <!-- ZIP生成用ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
   <script>
     const fileInput = document.getElementById('fileInput');
@@ -225,6 +258,11 @@
     const tilesEl  = document.getElementById('tiles');
     const originalPreview = document.getElementById('originalPreview');
     const clearBtn = document.getElementById('clearBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+
+    // タイル情報を保持する配列
+    let tilesData = [];
 
     dropArea.addEventListener('click', () => fileInput.click());
 
@@ -255,6 +293,7 @@
 
     clearBtn.addEventListener('click', () => {
       tilesEl.innerHTML = '';
+      tilesData = [];
       originalPreview.innerHTML =
         '<span style="font-size:0.78rem; color:#64748b;">まだ画像が読み込まれていません。</span>';
       fileInput.value = '';
@@ -285,6 +324,7 @@
 
     function splitImage(img) {
       tilesEl.innerHTML = '';
+      tilesData = [];
 
       const cols = 3;
       const rows = 3;
@@ -307,28 +347,107 @@
           );
 
           const dataUrl = canvas.toDataURL('image/png');
+          const row = y + 1;
+          const col = x + 1;
+
+          // 配列に保存（ZIP用）
+          tilesData.push({ row, col, dataUrl });
+          const index = tilesData.length - 1;
 
           const tileDiv = document.createElement('div');
           tileDiv.className = 'tile';
+
+          const header = document.createElement('div');
+          header.className = 'tile-header';
+
+          const label = document.createElement('label');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'tile-check';
+          checkbox.checked = true;
+          checkbox.dataset.index = index;
+
+          const txt = document.createElement('span');
+          txt.textContent = `(${row}, ${col})`;
+
+          label.appendChild(checkbox);
+          label.appendChild(txt);
+
+          const mini = document.createElement('span');
+          mini.textContent = '保存対象';
+          mini.style.fontSize = '0.65rem';
+
+          header.appendChild(label);
+          header.appendChild(mini);
 
           const tileImg = document.createElement('img');
           tileImg.src = dataUrl;
 
           const btn = document.createElement('button');
-          const label = `タイル (${y+1}, ${x+1}) を保存`;
-          btn.textContent = label;
+          btn.textContent = `このタイルだけ保存`;
           btn.addEventListener('click', () => {
             const a = document.createElement('a');
             a.href = dataUrl;
-            a.download = `grid_${y+1}_${x+1}.png`;
+            a.download = `grid_${row}_${col}.png`;
             a.click();
           });
 
+          tileDiv.appendChild(header);
           tileDiv.appendChild(tileImg);
           tileDiv.appendChild(btn);
           tilesEl.appendChild(tileDiv);
         }
       }
+    }
+
+    // 全タイルZIP保存
+    downloadAllBtn.addEventListener('click', () => {
+      if (!tilesData.length) {
+        alert('まず画像をアップロードしてください。');
+        return;
+      }
+      const indices = tilesData.map((_, i) => i);
+      downloadZip(indices, 'grid_all.zip');
+    });
+
+    // チェック済みタイルのみZIP保存
+    downloadSelectedBtn.addEventListener('click', () => {
+      if (!tilesData.length) {
+        alert('まず画像をアップロードしてください。');
+        return;
+      }
+      const checks = document.querySelectorAll('.tile-check');
+      const indices = [];
+      checks.forEach(ch => {
+        if (ch.checked) {
+          indices.push(Number(ch.dataset.index));
+        }
+      });
+      if (!indices.length) {
+        alert('ZIPに含めるタイルにチェックを入れてください。');
+        return;
+      }
+      downloadZip(indices, 'grid_selected.zip');
+    });
+
+    async function downloadZip(indices, filename) {
+      if (!window.JSZip) {
+        alert('ZIPライブラリの読み込みに失敗しました。ネットワーク接続を確認してください。');
+        return;
+      }
+      const zip = new JSZip();
+      indices.forEach(i => {
+        const t = tilesData[i];
+        const base64 = t.dataUrl.split(',')[1]; // dataURLからBase64部分だけ抜き出し
+        zip.file(`grid_${t.row}_${t.col}.png`, base64, { base64: true });
+      });
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
     }
   </script>
 </body>
